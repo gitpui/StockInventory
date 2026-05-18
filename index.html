@@ -240,7 +240,7 @@ tr:hover td{background:#fafbff}
     <div class="card">
       <div style="font-size:12.5px;font-weight:600;margin-bottom:12px;color:var(--c1);display:flex;align-items:center;gap:6px"><i class="ti ti-file-invoice" style="font-size:15px"></i>ข้อมูลเอกสารรับเข้า</div>
       <div class="form-grid">
-        <div class="fg"><label>เลขที่เอกสาร GR</label><input class="fc" id="gr-doc" value="(ระบบจะสร้างอัตโนมัติหลังบันทึก)" readonly style="color:var(--txt3); font-weight:500; font-style: italic;"></div>
+        <div class="fg"><label>เลขที่เอกสาร GR <span style="color:#dc2626">*</span></label><input class="fc" id="gr-doc" placeholder="กรอกเลขที่เอกสาร GR"style="font-weight:500;"></div>
         <div class="fg"><label>วันที่รับเข้า</label><input class="fc" type="date" id="gr-date"></div>
         <div class="fg"><label>ผู้จำหน่าย (Supplier)</label>
           <select class="fc" id="gr-sup"><option value="">-- เลือกผู้จำหน่าย --</option></select>
@@ -544,20 +544,16 @@ function renderBars(grData, giData) {
 
 // ── GR form ───────────────────────────────────────────────
 function setNextDocNo() {
-  document.getElementById('gr-doc').value = '(ระบบจะสร้างอัตโนมัติหลังบันทึก)';
-
   var yr = new Date().getFullYear();
-
+  api('goods_receipts?select=doc_no&doc_no=like.GR-' + yr + '-%&order=doc_no.desc&limit=1').then(function(rows) {
+    var next = 1;
+    if (rows.length) { var m = rows[0].doc_no.match(/(\d+)$/); if (m) next = parseInt(m[1])+1; }
+    document.getElementById('gr-doc').value = 'GR-' + yr + '-' + String(next).padStart(4,'0');
+  });
   api('goods_issues?select=doc_no&doc_no=like.GI-' + yr + '-%&order=doc_no.desc&limit=1').then(function(rows) {
     var next = 1;
-
-    if (rows.length) {
-      var m = rows[0].doc_no.match(/(\d+)$/);
-      if (m) next = parseInt(m[1]) + 1;
-    }
-
-    document.getElementById('gi-doc').value =
-      'GI-' + yr + '-' + String(next).padStart(4,'0');
+    if (rows.length) { var m = rows[0].doc_no.match(/(\d+)$/); if (m) next = parseInt(m[1])+1; }
+    document.getElementById('gi-doc').value = 'GI-' + yr + '-' + String(next).padStart(4,'0');
   });
 }
 
@@ -598,144 +594,38 @@ function updateGRItem(i, sel) {
 }
 
 function saveGR() {
-
-  if (!grLines.length) {
-    showNotify('in-notify','กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ',true);
-    return;
-  }
-
-  var supId = document.getElementById('gr-sup').value;
-
-  if (!supId) {
-    showNotify('in-notify','กรุณาเลือกผู้จำหน่าย',true);
-    return;
-  }
-
-  var btn = document.getElementById('btn-save-gr');
-
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spin"></div> กำลังบันทึก...';
-
-  var total = grLines.reduce(function(s,l){
-    return s + l.rec * l.price;
-  },0);
-
-  var yr = new Date().getFullYear();
-
-  // ดึงเลขล่าสุดจาก DB ตอนกดบันทึกจริง
-  api(
-    'goods_receipts?select=doc_no&doc_no=like.GR-' +
-    yr +
-    '-%&order=doc_no.desc&limit=1'
-  )
-
-  .then(function(rows){
-
-    var next = 1;
-
-    if (rows.length) {
-      var m = rows[0].doc_no.match(/(\d+)$/);
-
-      if (m) {
-        next = parseInt(m[1]) + 1;
-      }
-    }
-
-    var newDocNo =
-      'GR-' + yr + '-' + String(next).padStart(4,'0');
-
-    // update field บนหน้าจอ
-    document.getElementById('gr-doc').value = newDocNo;
-
-    var header = {
-      doc_no: newDocNo,
-      doc_date: document.getElementById('gr-date').value,
-      supplier_id: supId,
-      po_ref: document.getElementById('gr-po').value || null,
-      note: document.getElementById('gr-note').value || null,
-      total_amount: total,
-      status: 'completed'
-    };
-
-    return api('goods_receipts', {
-      method:'POST',
-      body: JSON.stringify(header)
-    })
-
-    .then(function(rows){
-
-      var rid = rows[0].id;
-
-      var lines = grLines.map(function(l){
-        return {
-          receipt_id: rid,
-          item_id: l.id,
-          qty_ordered: l.ord,
-          qty_received: l.rec,
-          unit_price: l.price
-        };
-      });
-
-      return api('goods_receipt_lines', {
-        method:'POST',
-        body: JSON.stringify(lines)
-      })
-
-      .then(function(){
-        return {
-          docNo: newDocNo
-        };
-      });
-
-    });
-
-  })
-
-  .then(function(result){
-
-    showNotify(
-      'in-notify',
-      'บันทึกรับเข้าสำเร็จ — ' +
-      result.docNo +
-      ' รวม ' +
-      fmtB(total)
-    );
-
-    grLines = [];
-
-    document.getElementById('gr-po').value = '';
-    document.getElementById('gr-note').value = '';
-    document.getElementById('gr-sup').value = '';
-
-    return Promise.all([
-      loadItems(),
-      loadInHist(),
-      setNextDocNo()
-    ]);
-
-  })
-
-  .then(function(){
-    renderGRLines();
-  })
-
-  .catch(function(e){
-    showNotify(
-      'in-notify',
-      'เกิดข้อผิดพลาด: ' + e.message,
-      true
-    );
-  })
-
-  .finally(function(){
-
-    btn.disabled = false;
-
-    btn.innerHTML =
-      '<i class="ti ti-device-floppy" style="font-size:13px"></i>บันทึกรับเข้า';
-
-  });
+  if (!grLines.length) { showNotify('in-notify','กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ',true); return; }
+var docNo = document.getElementById('gr-doc').value.trim();
+if (!docNo) {
+  showNotify('in-notify','กรุณากรอกเลขที่เอกสาร GR',true);
+  return;
 }
+
+var supId = document.getElementById('gr-sup').value;
+if (!supId) { 
+  showNotify('in-notify','กรุณาเลือกผู้จำหน่าย',true); 
+  return; 
+}
+  var btn = document.getElementById('btn-save-gr');
+  btn.disabled = true; btn.innerHTML = '<div class="spin"></div> กำลังบันทึก...';
+  var total = grLines.reduce(function(s,l){ return s+l.rec*l.price; },0);
+  var header = { doc_no: document.getElementById('gr-doc').value, doc_date: document.getElementById('gr-date').value, supplier_id: supId, po_ref: document.getElementById('gr-po').value||null, note: document.getElementById('gr-note').value||null, total_amount: total, status: 'completed' };
+  api('goods_receipts', { method:'POST', body: JSON.stringify(header) })
+    .then(function(rows) {
+      var rid = rows[0].id;
+      var lines = grLines.map(function(l){ return { receipt_id: rid, item_id: l.id, qty_ordered: l.ord, qty_received: l.rec, unit_price: l.price }; });
+      return api('goods_receipt_lines', { method:'POST', body: JSON.stringify(lines) });
+    })
+    .then(function() {
+      showNotify('in-notify', 'บันทึกรับเข้าสำเร็จ — ' + header.doc_no + ' รวม ' + fmtB(total));
+      grLines = [];
+      return Promise.all([loadItems(), setNextDocNo()]);
+    })
+    .then(function(){ renderGRLines(); loadInHist(); })
+    .catch(function(e){ showNotify('in-notify','เกิดข้อผิดพลาด: '+e.message,true); })
+    .finally(function(){ btn.disabled=false; btn.innerHTML='<i class="ti ti-device-floppy" style="font-size:13px"></i>บันทึกรับเข้า'; });
+}
+
 // ── GI form ───────────────────────────────────────────────
 function addGILine() {
   if (!allItems.length) { alert('ยังโหลดรายการสินค้าไม่ได้'); return; }
