@@ -77,6 +77,7 @@ body{font-family:'Sarabun',sans-serif;font-size:13px;color:var(--txt);background
 .fc:focus{border-color:var(--c1);background:var(--surf)}
 select.fc{cursor:pointer}
 .fc:read-only{background:#f3f4f9;color:var(--txt3);cursor:default}
+input[list].fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23adb3cc' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
 table{width:100%;border-collapse:collapse;table-layout:fixed}
 th{padding:8px 12px;text-align:left;font-size:11px;color:var(--txt3);font-weight:500;border-bottom:1px solid var(--bord);white-space:nowrap;cursor:pointer;user-select:none}
 th:hover{color:var(--c1)}
@@ -166,7 +167,7 @@ tr:hover td{background:#fafbff}
       <div><h2 id="dash-greeting">สวัสดี!</h2><p id="dash-sub">กำลังโหลดข้อมูล...</p></div>
       <div style="display:flex;gap:8px">
         <button class="btn-sec" onclick="loadDashboard()"><i class="ti ti-refresh" style="font-size:13px"></i>รีเฟรช</button>
-        <button class="btn-pri" onclick="showPage('in',document.getElementById('nav-in'))"><i class="ti ti-plus" style="font-size:13px"></i>+ รับเข้าใหม่</button>
+        <button class="btn-pri" onclick="showPage('in',document.getElementById('nav-in'))"><i class="ti ti-plus" style="font-size:13px"></i> รับเข้าใหม่</button>
       </div>
     </div>
     <div class="stat-grid">
@@ -222,7 +223,7 @@ tr:hover td{background:#fafbff}
         <label class="btn-sec" style="cursor:pointer"><i class="ti ti-upload" style="font-size:13px"></i>Import Excel/CSV<input type="file" id="import-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importItems(this)"></label>
         <button class="btn-sec" onclick="downloadTemplate()"><i class="ti ti-download" style="font-size:13px"></i>Template</button>
         <button class="btn-sec" onclick="exportItemsExcel()"><i class="ti ti-file-spreadsheet" style="font-size:13px"></i>Export Excel</button>
-        <button class="btn-pri" onclick="openItemModal()"><i class="ti ti-plus" style="font-size:13px"></i>+ เพิ่มสินค้า</button>
+        <button class="btn-pri" onclick="openItemModal()"><i class="ti ti-plus" style="font-size:13px"></i> เพิ่มสินค้า</button>
       </div>
     </div>
     <!-- Column filters -->
@@ -259,28 +260,62 @@ tr:hover td{background:#fafbff}
       </div>
     </div>
     <!-- Add/Edit Item Modal (inline) -->
-    <div id="item-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:center;justify-content:center">
-      <div style="background:var(--surf);border-radius:12px;padding:24px;width:480px;max-width:95vw;border:1px solid var(--bord)">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <div style="font-size:14px;font-weight:600" id="item-modal-title">เพิ่มสินค้าใหม่</div>
-          <button onclick="closeItemModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--txt3)">×</button>
+    <!-- datalists สำหรับ dropdown + พิมพ์เองได้ -->
+    <datalist id="dl-cat"></datalist>
+    <datalist id="dl-loc"></datalist>
+    <datalist id="dl-wh"></datalist>
+
+    <!-- ④ Modal: scrollable overlay + draggable panel -->
+    <div id="item-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;overflow-y:auto;padding:24px 12px">
+      <div id="item-modal-panel" style="background:var(--surf);border-radius:12px;padding:24px;width:520px;max-width:98vw;margin:auto;border:1px solid var(--bord);box-shadow:0 8px 32px rgba(0,0,0,.18)">
+        <!-- header (draggable handle) -->
+        <div id="item-modal-drag" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;cursor:move;user-select:none">
+          <div style="display:flex;align-items:center;gap:8px">
+            <i class="ti ti-grip-horizontal" style="color:var(--txt3);font-size:14px"></i>
+            <div style="font-size:14px;font-weight:600" id="item-modal-title">เพิ่มสินค้าใหม่</div>
+          </div>
+          <button onclick="closeItemModal()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--txt3);line-height:1">×</button>
         </div>
+
         <div class="form-grid">
           <div class="fg"><label>SKU <span style="color:#dc2626">*</span></label><input class="fc" id="im-sku" placeholder="เช่น SRV-AC3-001"></div>
           <div class="fg"><label>ชื่อสินค้า <span style="color:#dc2626">*</span></label><input class="fc" id="im-name" placeholder="ชื่อสินค้า"></div>
-          <div class="fg"><label>หมวดหมู่</label><input class="fc" id="im-cat" placeholder="เช่น FA & Robot"></div>
+
+          <!-- ② หมวดหมู่ — datalist dropdown + พิมพ์เองได้ -->
+          <div class="fg">
+            <label>หมวดหมู่</label>
+            <input class="fc" id="im-cat" list="dl-cat" placeholder="เลือกหรือพิมพ์ใหม่..." autocomplete="off">
+          </div>
           <div class="fg"><label>หน่วย</label><input class="fc" id="im-unit" placeholder="เช่น ชิ้น, เครื่อง"></div>
-          <div class="fg"><label>Location</label><input class="fc" id="im-loc" placeholder="เช่น A-01-03"></div>
-          <div class="fg"><label>Warehouse</label><input class="fc" id="im-wh" placeholder="เช่น WH-01"></div>
+
+          <!-- ③ Location — datalist dropdown -->
+          <div class="fg">
+            <label>Location</label>
+            <input class="fc" id="im-loc" list="dl-loc" placeholder="เลือกหรือพิมพ์ใหม่..." autocomplete="off">
+          </div>
+
+          <!-- ④ Warehouse — datalist dropdown -->
+          <div class="fg">
+            <label>Warehouse</label>
+            <input class="fc" id="im-wh" list="dl-wh" placeholder="เลือกหรือพิมพ์ใหม่..." autocomplete="off">
+          </div>
+
           <div class="fg"><label>สต็อกเริ่มต้น</label><input class="fc" id="im-qty" type="number" placeholder="0" min="0"></div>
           <div class="fg"><label>Min Stock</label><input class="fc" id="im-min" type="number" placeholder="5" min="0"></div>
           <div class="fg"><label>ราคาต้นทุน (฿)</label><input class="fc" id="im-cost" type="number" placeholder="0"></div>
           <div class="fg"><label>ราคาขาย (฿)</label><input class="fc" id="im-price" type="number" placeholder="0"></div>
-          <div class="fg full"><label>คำอธิบาย</label><input class="fc" id="im-desc" placeholder="รายละเอียดสินค้า"></div>
+
+          <!-- ⑤ คำอธิบาย — textarea ขยายได้ -->
+          <div class="fg full">
+            <label>คำอธิบาย</label>
+            <textarea class="fc" id="im-desc" placeholder="รายละเอียดสินค้า เช่น spec, รุ่น, ใช้กับเครื่องใด..."
+              style="resize:vertical;min-height:60px;max-height:200px;font-family:'Sarabun',sans-serif;line-height:1.5"></textarea>
+          </div>
         </div>
-        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px">
           <button class="btn-sec" onclick="closeItemModal()">ยกเลิก</button>
-          <button class="btn-pri" onclick="saveItem()"><i class="ti ti-device-floppy" style="font-size:13px"></i>บันทึก</button>
+          <button class="btn-pri" id="btn-save-item" onclick="saveItem()"><i class="ti ti-device-floppy" style="font-size:13px"></i>บันทึก</button>
         </div>
       </div>
     </div>
@@ -725,24 +760,135 @@ function renderItemsTable(data) {
 function openItemModal(it) {
   var m = document.getElementById('item-modal');
   document.getElementById('item-modal-title').textContent = it ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่';
-  ['sku','name','cat','unit','loc','wh','qty','min','cost','price','desc'].forEach(function(f){ document.getElementById('im-'+f).value = it ? (it[f]||'') : ''; });
+
+  // populate fields — desc is now textarea
+  document.getElementById('im-sku').value   = it ? (it.sku||'')        : '';
+  document.getElementById('im-name').value  = it ? (it.name||'')       : '';
+  document.getElementById('im-cat').value   = it ? (it.category||'')   : '';
+  document.getElementById('im-unit').value  = it ? (it.unit||'')       : '';
+  document.getElementById('im-loc').value   = it ? (it.location||'')   : '';
+  document.getElementById('im-wh').value    = it ? (it.warehouse||'')  : '';
+  document.getElementById('im-qty').value   = it ? (it.qty_on_hand||0) : '';
+  document.getElementById('im-min').value   = it ? (it.qty_min||0)     : '';
+  document.getElementById('im-cost').value  = it ? (it.cost_price||0)  : '';
+  document.getElementById('im-price').value = it ? (it.unit_price||0)  : '';
+  document.getElementById('im-desc').value  = it ? (it.description||''):  '';
+
   m._edit = it ? it.id : null;
-  m.style.display = 'flex';
+
+  // ② populate datalists from existing items data
+  populateModalDropdowns();
+
+  m.style.display = 'block';
+  // scroll panel back to top each time
+  document.getElementById('item-modal-panel').scrollTop = 0;
 }
-function closeItemModal() { document.getElementById('item-modal').style.display = 'none'; }
+
+function populateModalDropdowns() {
+  // Categories
+  var cats = [...new Set(allItems.map(function(i){ return i.category||''; }).filter(Boolean))].sort();
+  document.getElementById('dl-cat').innerHTML = cats.map(function(c){ return '<option value="'+c+'">'; }).join('');
+  // Locations
+  var locs = [...new Set(allItems.map(function(i){ return i.location||''; }).filter(Boolean))].sort();
+  document.getElementById('dl-loc').innerHTML = locs.map(function(l){ return '<option value="'+l+'">'; }).join('');
+  // Warehouses
+  var whs = [...new Set(allItems.map(function(i){ return i.warehouse||''; }).filter(Boolean))].sort();
+  document.getElementById('dl-wh').innerHTML = whs.map(function(w){ return '<option value="'+w+'">'; }).join('');
+}
+
+function closeItemModal() {
+  document.getElementById('item-modal').style.display = 'none';
+  // reset drag offset
+  var panel = document.getElementById('item-modal-panel');
+  panel.style.marginTop = '';
+  panel.style.marginLeft = '';
+}
+
 function saveItem() {
-  var sku = document.getElementById('im-sku').value.trim();
+  var sku  = document.getElementById('im-sku').value.trim();
   var name = document.getElementById('im-name').value.trim();
-  if (!sku||!name) { alert('กรุณากรอก SKU และชื่อสินค้า'); return; }
-  var payload = { sku:sku, name:name, category:document.getElementById('im-cat').value, unit:document.getElementById('im-unit').value,
-    location:document.getElementById('im-loc').value, warehouse:document.getElementById('im-wh').value,
-    qty_on_hand:parseInt(document.getElementById('im-qty').value)||0, qty_min:parseInt(document.getElementById('im-min').value)||5,
-    cost_price:parseFloat(document.getElementById('im-cost').value)||0, unit_price:parseFloat(document.getElementById('im-price').value)||0,
-    description:document.getElementById('im-desc').value, is_active:true };
+  if (!sku || !name) { alert('กรุณากรอก SKU และชื่อสินค้า'); return; }
+  var btn = document.getElementById('btn-save-item');
+  btn.disabled = true; btn.innerHTML = '<div class="spin"></div>';
+
+  // ① Fix: ส่ง category เป็น text ตรงๆ (ไม่ใช่ category_id)
+  //    items table มี column 'category' เป็น text ผ่าน categories.name
+  //    แต่ v_items join มาจาก categories.name → ต้อง upsert ผ่าน category text
+  var catText = document.getElementById('im-cat').value.trim();
+  var payload = {
+    sku:         sku,
+    name:        name,
+    unit:        document.getElementById('im-unit').value.trim() || 'ชิ้น',
+    location:    document.getElementById('im-loc').value.trim()  || null,
+    warehouse:   document.getElementById('im-wh').value.trim()   || null,
+    qty_on_hand: parseInt(document.getElementById('im-qty').value)  || 0,
+    qty_min:     parseInt(document.getElementById('im-min').value)  || 0,
+    cost_price:  parseFloat(document.getElementById('im-cost').value) || 0,
+    unit_price:  parseFloat(document.getElementById('im-price').value)|| 0,
+    description: document.getElementById('im-desc').value.trim() || null,
+    is_active:   true
+  };
+
+  // หา category_id จากชื่อหมวด (ถ้ามีใน categories table)
   var id = document.getElementById('item-modal')._edit;
-  var p = id ? api('items?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)}) : api('items',{method:'POST',body:JSON.stringify(payload)});
-  p.then(function(){ closeItemModal(); loadItems(); }).catch(function(e){ alert('เกิดข้อผิดพลาด: '+e.message); });
+  var catPromise = catText
+    ? api('categories?name=eq.' + encodeURIComponent(catText) + '&select=id').then(function(rows){
+        if (rows.length) {
+          payload.category_id = rows[0].id;
+        }
+        // ถ้าไม่พบ category → สร้างใหม่
+        return rows.length ? Promise.resolve() :
+          api('categories', { method:'POST', body: JSON.stringify({name: catText}) })
+            .then(function(r){ payload.category_id = r[0].id; });
+      })
+    : Promise.resolve();
+
+  catPromise.then(function(){
+    var p = id
+      ? api('items?id=eq.'+id, { method:'PATCH', body: JSON.stringify(payload) })
+      : api('items',           { method:'POST',  body: JSON.stringify(payload) });
+    return p;
+  }).then(function(){
+    closeItemModal();
+    loadItems();
+    populateModalDropdowns();
+  }).catch(function(e){
+    alert('เกิดข้อผิดพลาด: ' + e.message);
+  }).finally(function(){
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-device-floppy" style="font-size:13px"></i>บันทึก';
+  });
 }
+
+// ④ Draggable modal panel
+(function(){
+  var drag = false, sx, sy, mx, my;
+  document.addEventListener('DOMContentLoaded', function(){
+    var handle = document.getElementById('item-modal-drag');
+    var panel  = document.getElementById('item-modal-panel');
+    if (!handle || !panel) return;
+    handle.addEventListener('mousedown', function(e){
+      drag = true;
+      sx = e.clientX; sy = e.clientY;
+      mx = panel.offsetLeft || 0;
+      my = panel.offsetTop  || 0;
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', function(e){
+      if (!drag) return;
+      var dx = e.clientX - sx, dy = e.clientY - sy;
+      panel.style.position = 'relative';
+      panel.style.left = (mx + dx) + 'px';
+      panel.style.top  = (my + dy) + 'px';
+    });
+    document.addEventListener('mouseup', function(){ drag = false; });
+
+    // ④ click dark overlay (not panel) → close modal
+    document.getElementById('item-modal').addEventListener('click', function(e){
+      if (e.target === this) closeItemModal();
+    });
+  });
+}());
 
 // ── Import Excel/CSV ──────────────────────────────
 function importItems(input) {
@@ -1208,127 +1354,57 @@ function loadOutSummary() {
 
 // ⑤ การเคลื่อนไหว ──────────────────────────────────
 function loadMoveHistory() {
-  var tb = document.getElementById('move-tbody');
-  tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--txt3)"><div class="spin"></div> กำลังโหลด...</td></tr>';
-
-  // ดึงข้อมูลแบบ parallel: GR lines + GI lines พร้อม join items
   Promise.all([
-    api('goods_receipt_lines?select=id,qty_received,unit_price,goods_receipts(id,doc_no,doc_date,status,suppliers(name)),items(sku,name)&limit=500'),
-    api('goods_issue_lines?select=id,qty_issued,unit_price,goods_issues(id,doc_no,doc_date,status,department),items(sku,name)&limit=500')
+    api('v_goods_receipts?order=doc_date.desc,created_at.desc&limit=200'),
+    api('goods_issues?select=*&order=doc_date.desc,created_at.desc&limit=200')
   ]).then(function(res) {
-    var grRows = (res[0]||[]).map(function(r){
-      var gr = r.goods_receipts || {};
-      var it = r.items || {};
-      return {
-        type:   'receipt',
-        doc:    gr.doc_no  || '—',
-        date:   gr.doc_date|| '',
-        sku:    it.sku     || '—',
-        item:   it.name    || '—',
-        qty:    r.qty_received,
-        val:    (r.qty_received||0) * (r.unit_price||0),
-        party:  (gr.suppliers && gr.suppliers.name) || '—',
-        status: gr.status  || '—'
-      };
-    });
-    var giRows = (res[1]||[]).map(function(r){
-      var gi = r.goods_issues || {};
-      var it = r.items || {};
-      return {
-        type:   'issue',
-        doc:    gi.doc_no  || '—',
-        date:   gi.doc_date|| '',
-        sku:    it.sku     || '—',
-        item:   it.name    || '—',
-        qty:    r.qty_issued,
-        val:    (r.qty_issued||0) * (r.unit_price||0),
-        party:  gi.department || '—',
-        status: gi.status  || '—'
-      };
-    });
-    allMoveData = grRows.concat(giRows).sort(function(a,b){
-      if ((b.date||'') !== (a.date||'')) return (b.date||'').localeCompare(a.date||'');
-      return (b.doc||'').localeCompare(a.doc||'');
-    });
+    var grRows = (res[0]||[]).map(function(r){ return { type:'receipt', doc:r.doc_no, date:r.doc_date, party:r.supplier_name||'—', item:'(หลายรายการ)', qty:'—', val:r.total_amount, status:r.status }; });
+    var giRows = (res[1]||[]).map(function(r){ return { type:'issue', doc:r.doc_no, date:r.doc_date, party:r.department, item:'(หลายรายการ)', qty:'—', val:r.total_amount, status:r.status }; });
+    allMoveData = grRows.concat(giRows).sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
     renderMoveTable();
-  }).catch(function(e){
-    tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:16px;color:#dc2626"><i class="ti ti-alert-triangle"></i> โหลดไม่ได้: ' + (e.message||'ไม่ทราบสาเหตุ') + '</td></tr>';
-  });
+  }).catch(function(){ document.getElementById('move-tbody').innerHTML='<tr><td colspan="9" style="text-align:center;padding:16px;color:#dc2626">โหลดไม่ได้</td></tr>'; });
 }
 
 function renderMoveTable() {
-  var kw   = (document.getElementById('mv-search').value||'').toLowerCase();
+  var kw = (document.getElementById('mv-search').value||'').toLowerCase();
   var type = document.getElementById('mv-type').value;
-  var df   = document.getElementById('mv-date-from').value;
-  var dt   = document.getElementById('mv-date-to').value;
+  var df = document.getElementById('mv-date-from').value;
+  var dt = document.getElementById('mv-date-to').value;
   var rows = allMoveData.filter(function(r){
-    return (!type || r.type === type)
-      && (!kw || (r.doc||'').toLowerCase().includes(kw)
-              || (r.sku||'').toLowerCase().includes(kw)
-              || (r.item||'').toLowerCase().includes(kw)
-              || (r.party||'').toLowerCase().includes(kw))
+    return (!type || r.type===type)
+      && (!kw || (r.doc||'').toLowerCase().includes(kw) || (r.party||'').toLowerCase().includes(kw) || (r.item||'').toLowerCase().includes(kw))
       && (!df || (r.date||'') >= df)
       && (!dt || (r.date||'') <= dt);
   });
   document.getElementById('mv-count').textContent = rows.length + ' รายการ';
   var tb = document.getElementById('move-tbody');
-  if (!rows.length) {
-    tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--txt3)">ไม่พบข้อมูล</td></tr>';
-    return;
-  }
+  if (!rows.length) { tb.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--txt3)">ไม่พบข้อมูล</td></tr>'; return; }
   tb.innerHTML = rows.map(function(r){
-    var lbl   = r.type==='receipt'
-      ? '<span class="badge-in"  style="font-size:10px">GR</span>'
-      : '<span class="badge-out" style="font-size:10px">GI</span>';
-    var docSpan = r.type==='receipt'
-      ? '<span class="doc-num">' + r.doc + '</span>'
-      : '<span style="color:#dc2626;font-weight:500;font-size:11.5px">' + r.doc + '</span>';
-    var badge = r.status==='posted'
-      ? '<span class="badge-posted">Posted</span>'
-      : '<span class="badge-draft">Draft</span>';
-    var qtyColor = r.type==='receipt' ? '#059669' : '#dc2626';
-    var qtySign  = r.type==='receipt' ? '+' : '-';
-    return '<tr>'
-      + '<td style="text-align:center">' + lbl + '</td>'
-      + '<td>' + docSpan + '</td>'
-      + '<td style="color:var(--txt3)">' + fmtDateTH(r.date) + '</td>'
-      + '<td><span class="code">' + r.sku + '</span></td>'
-      + '<td style="font-size:11.5px">' + r.item + '</td>'
-      + '<td style="text-align:right;font-weight:700;color:' + qtyColor + '">' + qtySign + fmt(r.qty) + '</td>'
-      + '<td style="text-align:right;font-weight:500">' + fmtB(r.val) + '</td>'
-      + '<td style="font-size:11.5px">' + r.party + '</td>'
-      + '<td style="text-align:center">' + badge + '</td>'
-      + '</tr>';
+    var dot = r.type==='receipt' ? '<span class="mv-dot in"></span>' : '<span class="mv-dot out"></span>';
+    var lbl = r.type==='receipt' ? '<span class="badge-in" style="font-size:10px">GR</span>' : '<span class="badge-out" style="font-size:10px">GI</span>';
+    var badge = r.status==='posted' ? '<span class="badge-posted">Posted</span>' : '<span class="badge-draft">Draft</span>';
+    return '<tr><td style="text-align:center">'+lbl+'</td>'
+      +'<td><span class="'+(r.type==='receipt'?'doc-num':'')+'" style="'+(r.type==='issue'?'color:#dc2626;font-weight:500;font-size:11.5px':'')+'">'+(r.doc||'—')+'</span></td>'
+      +'<td style="color:var(--txt3)">'+fmtDateTH(r.date)+'</td>'
+      +'<td>—</td><td style="font-size:11.5px">—</td>'
+      +'<td style="text-align:right">'+r.qty+'</td>'
+      +'<td style="text-align:right;font-weight:500">'+fmtB(r.val)+'</td>'
+      +'<td style="font-size:11.5px">'+r.party+'</td>'
+      +'<td style="text-align:center">'+badge+'</td></tr>';
   }).join('');
 }
 
 function clearMoveFilters() {
-  document.getElementById('mv-search').value    = '';
-  document.getElementById('mv-type').value      = '';
-  document.getElementById('mv-date-from').value = '';
-  document.getElementById('mv-date-to').value   = '';
+  document.getElementById('mv-search').value='';
+  document.getElementById('mv-type').value='';
+  document.getElementById('mv-date-from').value='';
+  document.getElementById('mv-date-to').value='';
   renderMoveTable();
 }
 
 function exportMoveExcel() {
-  if (!allMoveData.length) { alert('ไม่มีข้อมูลให้ Export — กรุณาโหลดข้อมูลก่อน'); return; }
-  var data = allMoveData.map(function(r){
-    return {
-      ประเภท:        r.type==='receipt' ? 'รับเข้า' : 'จ่ายออก',
-      เลขเอกสาร:    r.doc,
-      วันที่:        fmtDateTH(r.date),
-      SKU:           r.sku,
-      ชื่อสินค้า:   r.item,
-      จำนวน:        r.type==='receipt' ? r.qty : -r.qty,
-      มูลค่า:       r.val,
-      คู่ค้า_แผนก: r.party,
-      สถานะ:        r.status
-    };
-  });
-  var ws = XLSX.utils.json_to_sheet(data);
-  var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Movements');
-  XLSX.writeFile(wb, 'movements_' + today() + '.xlsx');
+  var data = allMoveData.map(function(r){ return { ประเภท:r.type==='receipt'?'รับเข้า':'จ่ายออก', เลขเอกสาร:r.doc, วันที่:fmtDateTH(r.date), คู่ค้า_แผนก:r.party, มูลค่า:r.val, สถานะ:r.status }; });
+  var ws=XLSX.utils.json_to_sheet(data); var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Movements'); XLSX.writeFile(wb,'movements_export.xlsx');
 }
 
 // ⑥ Stock Report ──────────────────────────────────
