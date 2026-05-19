@@ -1208,57 +1208,127 @@ function loadOutSummary() {
 
 // ⑤ การเคลื่อนไหว ──────────────────────────────────
 function loadMoveHistory() {
+  var tb = document.getElementById('move-tbody');
+  tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--txt3)"><div class="spin"></div> กำลังโหลด...</td></tr>';
+
+  // ดึงข้อมูลแบบ parallel: GR lines + GI lines พร้อม join items
   Promise.all([
-    api('v_goods_receipts?order=doc_date.desc,created_at.desc&limit=200'),
-    api('goods_issues?select=*&order=doc_date.desc,created_at.desc&limit=200')
+    api('goods_receipt_lines?select=id,qty_received,unit_price,goods_receipts(id,doc_no,doc_date,status,suppliers(name)),items(sku,name)&limit=500'),
+    api('goods_issue_lines?select=id,qty_issued,unit_price,goods_issues(id,doc_no,doc_date,status,department),items(sku,name)&limit=500')
   ]).then(function(res) {
-    var grRows = (res[0]||[]).map(function(r){ return { type:'receipt', doc:r.doc_no, date:r.doc_date, party:r.supplier_name||'—', item:'(หลายรายการ)', qty:'—', val:r.total_amount, status:r.status }; });
-    var giRows = (res[1]||[]).map(function(r){ return { type:'issue', doc:r.doc_no, date:r.doc_date, party:r.department, item:'(หลายรายการ)', qty:'—', val:r.total_amount, status:r.status }; });
-    allMoveData = grRows.concat(giRows).sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+    var grRows = (res[0]||[]).map(function(r){
+      var gr = r.goods_receipts || {};
+      var it = r.items || {};
+      return {
+        type:   'receipt',
+        doc:    gr.doc_no  || '—',
+        date:   gr.doc_date|| '',
+        sku:    it.sku     || '—',
+        item:   it.name    || '—',
+        qty:    r.qty_received,
+        val:    (r.qty_received||0) * (r.unit_price||0),
+        party:  (gr.suppliers && gr.suppliers.name) || '—',
+        status: gr.status  || '—'
+      };
+    });
+    var giRows = (res[1]||[]).map(function(r){
+      var gi = r.goods_issues || {};
+      var it = r.items || {};
+      return {
+        type:   'issue',
+        doc:    gi.doc_no  || '—',
+        date:   gi.doc_date|| '',
+        sku:    it.sku     || '—',
+        item:   it.name    || '—',
+        qty:    r.qty_issued,
+        val:    (r.qty_issued||0) * (r.unit_price||0),
+        party:  gi.department || '—',
+        status: gi.status  || '—'
+      };
+    });
+    allMoveData = grRows.concat(giRows).sort(function(a,b){
+      if ((b.date||'') !== (a.date||'')) return (b.date||'').localeCompare(a.date||'');
+      return (b.doc||'').localeCompare(a.doc||'');
+    });
     renderMoveTable();
-  }).catch(function(){ document.getElementById('move-tbody').innerHTML='<tr><td colspan="9" style="text-align:center;padding:16px;color:#dc2626">โหลดไม่ได้</td></tr>'; });
+  }).catch(function(e){
+    tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:16px;color:#dc2626"><i class="ti ti-alert-triangle"></i> โหลดไม่ได้: ' + (e.message||'ไม่ทราบสาเหตุ') + '</td></tr>';
+  });
 }
 
 function renderMoveTable() {
-  var kw = (document.getElementById('mv-search').value||'').toLowerCase();
+  var kw   = (document.getElementById('mv-search').value||'').toLowerCase();
   var type = document.getElementById('mv-type').value;
-  var df = document.getElementById('mv-date-from').value;
-  var dt = document.getElementById('mv-date-to').value;
+  var df   = document.getElementById('mv-date-from').value;
+  var dt   = document.getElementById('mv-date-to').value;
   var rows = allMoveData.filter(function(r){
-    return (!type || r.type===type)
-      && (!kw || (r.doc||'').toLowerCase().includes(kw) || (r.party||'').toLowerCase().includes(kw) || (r.item||'').toLowerCase().includes(kw))
+    return (!type || r.type === type)
+      && (!kw || (r.doc||'').toLowerCase().includes(kw)
+              || (r.sku||'').toLowerCase().includes(kw)
+              || (r.item||'').toLowerCase().includes(kw)
+              || (r.party||'').toLowerCase().includes(kw))
       && (!df || (r.date||'') >= df)
       && (!dt || (r.date||'') <= dt);
   });
   document.getElementById('mv-count').textContent = rows.length + ' รายการ';
   var tb = document.getElementById('move-tbody');
-  if (!rows.length) { tb.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--txt3)">ไม่พบข้อมูล</td></tr>'; return; }
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--txt3)">ไม่พบข้อมูล</td></tr>';
+    return;
+  }
   tb.innerHTML = rows.map(function(r){
-    var dot = r.type==='receipt' ? '<span class="mv-dot in"></span>' : '<span class="mv-dot out"></span>';
-    var lbl = r.type==='receipt' ? '<span class="badge-in" style="font-size:10px">GR</span>' : '<span class="badge-out" style="font-size:10px">GI</span>';
-    var badge = r.status==='posted' ? '<span class="badge-posted">Posted</span>' : '<span class="badge-draft">Draft</span>';
-    return '<tr><td style="text-align:center">'+lbl+'</td>'
-      +'<td><span class="'+(r.type==='receipt'?'doc-num':'')+'" style="'+(r.type==='issue'?'color:#dc2626;font-weight:500;font-size:11.5px':'')+'">'+(r.doc||'—')+'</span></td>'
-      +'<td style="color:var(--txt3)">'+fmtDateTH(r.date)+'</td>'
-      +'<td>—</td><td style="font-size:11.5px">—</td>'
-      +'<td style="text-align:right">'+r.qty+'</td>'
-      +'<td style="text-align:right;font-weight:500">'+fmtB(r.val)+'</td>'
-      +'<td style="font-size:11.5px">'+r.party+'</td>'
-      +'<td style="text-align:center">'+badge+'</td></tr>';
+    var lbl   = r.type==='receipt'
+      ? '<span class="badge-in"  style="font-size:10px">GR</span>'
+      : '<span class="badge-out" style="font-size:10px">GI</span>';
+    var docSpan = r.type==='receipt'
+      ? '<span class="doc-num">' + r.doc + '</span>'
+      : '<span style="color:#dc2626;font-weight:500;font-size:11.5px">' + r.doc + '</span>';
+    var badge = r.status==='posted'
+      ? '<span class="badge-posted">Posted</span>'
+      : '<span class="badge-draft">Draft</span>';
+    var qtyColor = r.type==='receipt' ? '#059669' : '#dc2626';
+    var qtySign  = r.type==='receipt' ? '+' : '-';
+    return '<tr>'
+      + '<td style="text-align:center">' + lbl + '</td>'
+      + '<td>' + docSpan + '</td>'
+      + '<td style="color:var(--txt3)">' + fmtDateTH(r.date) + '</td>'
+      + '<td><span class="code">' + r.sku + '</span></td>'
+      + '<td style="font-size:11.5px">' + r.item + '</td>'
+      + '<td style="text-align:right;font-weight:700;color:' + qtyColor + '">' + qtySign + fmt(r.qty) + '</td>'
+      + '<td style="text-align:right;font-weight:500">' + fmtB(r.val) + '</td>'
+      + '<td style="font-size:11.5px">' + r.party + '</td>'
+      + '<td style="text-align:center">' + badge + '</td>'
+      + '</tr>';
   }).join('');
 }
 
 function clearMoveFilters() {
-  document.getElementById('mv-search').value='';
-  document.getElementById('mv-type').value='';
-  document.getElementById('mv-date-from').value='';
-  document.getElementById('mv-date-to').value='';
+  document.getElementById('mv-search').value    = '';
+  document.getElementById('mv-type').value      = '';
+  document.getElementById('mv-date-from').value = '';
+  document.getElementById('mv-date-to').value   = '';
   renderMoveTable();
 }
 
 function exportMoveExcel() {
-  var data = allMoveData.map(function(r){ return { ประเภท:r.type==='receipt'?'รับเข้า':'จ่ายออก', เลขเอกสาร:r.doc, วันที่:fmtDateTH(r.date), คู่ค้า_แผนก:r.party, มูลค่า:r.val, สถานะ:r.status }; });
-  var ws=XLSX.utils.json_to_sheet(data); var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Movements'); XLSX.writeFile(wb,'movements_export.xlsx');
+  if (!allMoveData.length) { alert('ไม่มีข้อมูลให้ Export — กรุณาโหลดข้อมูลก่อน'); return; }
+  var data = allMoveData.map(function(r){
+    return {
+      ประเภท:        r.type==='receipt' ? 'รับเข้า' : 'จ่ายออก',
+      เลขเอกสาร:    r.doc,
+      วันที่:        fmtDateTH(r.date),
+      SKU:           r.sku,
+      ชื่อสินค้า:   r.item,
+      จำนวน:        r.type==='receipt' ? r.qty : -r.qty,
+      มูลค่า:       r.val,
+      คู่ค้า_แผนก: r.party,
+      สถานะ:        r.status
+    };
+  });
+  var ws = XLSX.utils.json_to_sheet(data);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Movements');
+  XLSX.writeFile(wb, 'movements_' + today() + '.xlsx');
 }
 
 // ⑥ Stock Report ──────────────────────────────────
