@@ -10,10 +10,51 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--c1:#f97316;--c2:#fb923c;--c3:#fff7ed;--c4:#ffedd5;--c5:#fed7aa;--bg:#f1f3f8;--surf:#fff;--surf2:#f6f7fb;--bord:#eceef5;--txt:#1e2235;--txt2:#6b728e;--txt3:#adb3cc}
-body{font-family:'Sarabun',sans-serif;font-size:13px;color:var(--txt);background:var(--bg);min-height:100vh;padding:20px}
+/* ═══════════ THEME TOKENS ═══════════ */
+:root{
+  --c1:#f97316;--c2:#fb923c;--c3:#fff7ed;--c4:#ffedd5;--c5:#fed7aa;
+  --bg:#f1f3f8;--surf:#fff;--surf2:#f6f7fb;--bord:#eceef5;
+  --txt:#1e2235;--txt2:#6b728e;--txt3:#adb3cc;
+  --sidebar-bg:#fff;--topbar-bg:#fff;
+}
+/* Dark */
+[data-theme="dark"]{
+  --c1:#f97316;--c2:#fb923c;--c3:#431407;--c4:#431407;--c5:#7c2d12;
+  --bg:#0f1117;--surf:#1a1d27;--surf2:#20232f;--bord:#2e3044;
+  --txt:#e8eaf2;--txt2:#9ba3c2;--txt3:#5a6080;
+  --sidebar-bg:#14161f;--topbar-bg:#14161f;
+}
+/* Ocean Blue */
+[data-theme="ocean"]{
+  --c1:#0ea5e9;--c2:#38bdf8;--c3:#e0f2fe;--c4:#bae6fd;--c5:#7dd3fc;
+  --bg:#f0f7ff;--surf:#ffffff;--surf2:#f0f7ff;--bord:#e0eef8;
+  --txt:#0c2340;--txt2:#4a7a9b;--txt3:#94b8cc;
+  --sidebar-bg:#fff;--topbar-bg:#fff;
+}
+/* Forest Green */
+[data-theme="forest"]{
+  --c1:#16a34a;--c2:#22c55e;--c3:#f0fdf4;--c4:#dcfce7;--c5:#bbf7d0;
+  --bg:#f2faf4;--surf:#ffffff;--surf2:#f0fdf4;--bord:#d1fae5;
+  --txt:#052e16;--txt2:#4a7c59;--txt3:#86b896;
+  --sidebar-bg:#fff;--topbar-bg:#fff;
+}
+/* Violet */
+[data-theme="violet"]{
+  --c1:#7c3aed;--c2:#8b5cf6;--c3:#f5f3ff;--c4:#ede9fe;--c5:#ddd6fe;
+  --bg:#f3f2ff;--surf:#ffffff;--surf2:#f5f3ff;--bord:#e9e5ff;
+  --txt:#1e0a3c;--txt2:#5b4b8a;--txt3:#9d8ec4;
+  --sidebar-bg:#fff;--topbar-bg:#fff;
+}
+/* Dark Ocean */
+[data-theme="dark-ocean"]{
+  --c1:#38bdf8;--c2:#7dd3fc;--c3:#0c2a3e;--c4:#0c2a3e;--c5:#164e63;
+  --bg:#0a1628;--surf:#0f1e35;--surf2:#152540;--bord:#1e3a5f;
+  --txt:#e0f0ff;--txt2:#7aaecc;--txt3:#3d6480;
+  --sidebar-bg:#0a1628;--topbar-bg:#0a1628;
+}
+body{font-family:'Sarabun',sans-serif;font-size:13px;color:var(--txt);background:var(--bg);min-height:100vh;padding:20px;transition:background .25s,color .25s}
 .app{display:flex;height:calc(100vh - 40px);min-height:620px;border-radius:12px;border:1px solid var(--bord);overflow:hidden}
-.sidebar{width:185px;background:var(--surf);border-right:1px solid var(--bord);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar{width:185px;background:var(--sidebar-bg);border-right:1px solid var(--bord);display:flex;flex-direction:column;flex-shrink:0}
 .sb-head{padding:13px 14px 11px;border-bottom:1px solid var(--bord);display:flex;align-items:center;gap:8px}
 .sb-logo{width:30px;height:30px;border-radius:8px;background:var(--c1);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;flex-shrink:0}
 .sb-brand{font-size:12px;font-weight:600;line-height:1.3}.sb-sub{font-size:10px;color:var(--txt3)}
@@ -24,7 +65,7 @@ body{font-family:'Sarabun',sans-serif;font-size:13px;color:var(--txt);background
 .sb-item i{font-size:15px;flex-shrink:0}
 .sb-badge{background:var(--c1);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:auto}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
-.topbar{background:var(--surf);border-bottom:1px solid var(--bord);padding:9px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.topbar{background:var(--topbar-bg);border-bottom:1px solid var(--bord);padding:9px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0}
 .bc{font-size:11.5px;color:var(--txt3);display:flex;align-items:center;gap:4px}
 .bc span{color:var(--txt);font-weight:500}
 .search-wrap{flex:1;max-width:300px;position:relative;margin-left:6px}
@@ -77,7 +118,6 @@ body{font-family:'Sarabun',sans-serif;font-size:13px;color:var(--txt);background
 .fc:focus{border-color:var(--c1);background:var(--surf)}
 select.fc{cursor:pointer}
 .fc:read-only{background:#f3f4f9;color:var(--txt3);cursor:default}
-input[list].fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23adb3cc' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
 table{width:100%;border-collapse:collapse;table-layout:fixed}
 th{padding:8px 12px;text-align:left;font-size:11px;color:var(--txt3);font-weight:500;border-bottom:1px solid var(--bord);white-space:nowrap;cursor:pointer;user-select:none}
 th:hover{color:var(--c1)}
@@ -101,6 +141,7 @@ tr:hover td{background:#fafbff}
 @keyframes spin{to{transform:rotate(360deg)}}
 #conn-banner{position:fixed;top:0;left:0;right:0;background:#fef3c7;border-bottom:1px solid #fbbf24;padding:8px 20px;font-size:12px;color:#92400e;z-index:100;display:none;align-items:center;gap:8px}
 .skel{background:linear-gradient(90deg,var(--bord) 25%,var(--surf2) 50%,var(--bord) 75%);background-size:200% 100%;animation:skel 1.2s ease-in-out infinite;border-radius:4px;height:14px}
+[data-theme="dark"] .skel,[data-theme="dark-ocean"] .skel{background:linear-gradient(90deg,var(--bord) 25%,var(--surf2) 50%,var(--bord) 75%);background-size:200% 100%;animation:skel 1.2s ease-in-out infinite}
 @keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
 /* ── Filter bar ── */
 .filter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 14px;border-bottom:1px solid var(--bord);background:var(--surf2)}
@@ -121,6 +162,33 @@ tr:hover td{background:#fafbff}
 .rpt-filter{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
 .rpt-filter select,.rpt-filter input{padding:7px 10px;border:1px solid var(--bord);border-radius:7px;font-size:12px;font-family:'Sarabun',sans-serif;background:var(--surf);color:var(--txt);outline:none}
 .rpt-filter select:focus,.rpt-filter input:focus{border-color:var(--c1)}
+
+/* ═══════════ THEME SWITCHER UI ═══════════ */
+#theme-panel{
+  position:fixed;right:0;top:50%;transform:translateY(-50%);
+  background:var(--surf);border:1px solid var(--bord);
+  border-right:none;border-radius:12px 0 0 12px;
+  padding:10px 10px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;
+  box-shadow:-3px 0 16px rgba(0,0,0,.08);z-index:300;transition:transform .25s,opacity .25s;
+  min-width:48px;
+}
+#theme-panel.collapsed{transform:translateY(-50%) translateX(calc(100% - 10px))}
+#theme-toggle-btn{
+  width:28px;height:28px;border-radius:7px;border:1px solid var(--bord);
+  background:var(--surf2);color:var(--txt2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  transition:all .15s;flex-shrink:0;align-self:flex-start;
+}
+#theme-toggle-btn:hover{border-color:var(--c1);color:var(--c1);background:var(--c3)}
+.theme-sep{width:28px;height:1px;background:var(--bord);flex-shrink:0}
+.theme-swatch{
+  width:28px;height:28px;border-radius:50%;border:2.5px solid transparent;
+  cursor:pointer;transition:transform .15s,border-color .15s;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:11px;
+}
+.theme-swatch:hover{transform:scale(1.15)}
+.theme-swatch.active{border-color:var(--c1);box-shadow:0 0 0 2px var(--c3)}
+.theme-label{font-size:9px;color:var(--txt3);text-align:center;line-height:1.3;max-width:44px;margin-top:-4px}
 </style>
 </head>
 <body>
@@ -156,6 +224,7 @@ tr:hover td{background:#fafbff}
     <div class="search-wrap"><i class="ti ti-search"></i><input class="si" id="search-input" placeholder="ค้นหาสินค้า, รหัส SKU..." oninput="handleSearch(this.value)"></div>
     <div class="tb-r">
       <button class="ib" id="refresh-btn" onclick="reloadCurrentPage()" title="รีเฟรช"><i class="ti ti-refresh"></i></button>
+      <button class="ib" onclick="toggleThemePanel()" title="เปลี่ยน Theme"><i class="ti ti-palette"></i></button>
       <button class="ib" title="การแจ้งเตือน"><i class="ti ti-bell"></i></button>
       <span id="db-status" style="font-size:10px;color:var(--txt3);padding:0 4px" title="สถานะ DB">●</span>
     </div>
@@ -167,7 +236,7 @@ tr:hover td{background:#fafbff}
       <div><h2 id="dash-greeting">สวัสดี!</h2><p id="dash-sub">กำลังโหลดข้อมูล...</p></div>
       <div style="display:flex;gap:8px">
         <button class="btn-sec" onclick="loadDashboard()"><i class="ti ti-refresh" style="font-size:13px"></i>รีเฟรช</button>
-        <button class="btn-pri" onclick="showPage('in',document.getElementById('nav-in'))"><i class="ti ti-plus" style="font-size:13px"></i> รับเข้าใหม่</button>
+        <button class="btn-pri" onclick="showPage('in',document.getElementById('nav-in'))"><i class="ti ti-plus" style="font-size:13px"></i>+ รับเข้าใหม่</button>
       </div>
     </div>
     <div class="stat-grid">
@@ -223,7 +292,7 @@ tr:hover td{background:#fafbff}
         <label class="btn-sec" style="cursor:pointer"><i class="ti ti-upload" style="font-size:13px"></i>Import Excel/CSV<input type="file" id="import-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importItems(this)"></label>
         <button class="btn-sec" onclick="downloadTemplate()"><i class="ti ti-download" style="font-size:13px"></i>Template</button>
         <button class="btn-sec" onclick="exportItemsExcel()"><i class="ti ti-file-spreadsheet" style="font-size:13px"></i>Export Excel</button>
-        <button class="btn-pri" onclick="openItemModal()"><i class="ti ti-plus" style="font-size:13px"></i> เพิ่มสินค้า</button>
+        <button class="btn-pri" onclick="openItemModal()"><i class="ti ti-plus" style="font-size:13px"></i>+ เพิ่มสินค้า</button>
       </div>
     </div>
     <!-- Column filters -->
@@ -260,62 +329,28 @@ tr:hover td{background:#fafbff}
       </div>
     </div>
     <!-- Add/Edit Item Modal (inline) -->
-    <!-- datalists สำหรับ dropdown + พิมพ์เองได้ -->
-    <datalist id="dl-cat"></datalist>
-    <datalist id="dl-loc"></datalist>
-    <datalist id="dl-wh"></datalist>
-
-    <!-- ④ Modal: scrollable overlay + draggable panel -->
-    <div id="item-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;overflow-y:auto;padding:24px 12px">
-      <div id="item-modal-panel" style="background:var(--surf);border-radius:12px;padding:24px;width:520px;max-width:98vw;margin:auto;border:1px solid var(--bord);box-shadow:0 8px 32px rgba(0,0,0,.18)">
-        <!-- header (draggable handle) -->
-        <div id="item-modal-drag" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;cursor:move;user-select:none">
-          <div style="display:flex;align-items:center;gap:8px">
-            <i class="ti ti-grip-horizontal" style="color:var(--txt3);font-size:14px"></i>
-            <div style="font-size:14px;font-weight:600" id="item-modal-title">เพิ่มสินค้าใหม่</div>
-          </div>
-          <button onclick="closeItemModal()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--txt3);line-height:1">×</button>
+    <div id="item-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:center;justify-content:center">
+      <div style="background:var(--surf);border-radius:12px;padding:24px;width:480px;max-width:95vw;border:1px solid var(--bord)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-size:14px;font-weight:600" id="item-modal-title">เพิ่มสินค้าใหม่</div>
+          <button onclick="closeItemModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--txt3)">×</button>
         </div>
-
         <div class="form-grid">
           <div class="fg"><label>SKU <span style="color:#dc2626">*</span></label><input class="fc" id="im-sku" placeholder="เช่น SRV-AC3-001"></div>
           <div class="fg"><label>ชื่อสินค้า <span style="color:#dc2626">*</span></label><input class="fc" id="im-name" placeholder="ชื่อสินค้า"></div>
-
-          <!-- ② หมวดหมู่ — datalist dropdown + พิมพ์เองได้ -->
-          <div class="fg">
-            <label>หมวดหมู่</label>
-            <input class="fc" id="im-cat" list="dl-cat" placeholder="เลือกหรือพิมพ์ใหม่..." autocomplete="off">
-          </div>
+          <div class="fg"><label>หมวดหมู่</label><input class="fc" id="im-cat" placeholder="เช่น FA & Robot"></div>
           <div class="fg"><label>หน่วย</label><input class="fc" id="im-unit" placeholder="เช่น ชิ้น, เครื่อง"></div>
-
-          <!-- ③ Location — datalist dropdown -->
-          <div class="fg">
-            <label>Location</label>
-            <input class="fc" id="im-loc" list="dl-loc" placeholder="เลือกหรือพิมพ์ใหม่..." autocomplete="off">
-          </div>
-
-          <!-- ④ Warehouse — datalist dropdown -->
-          <div class="fg">
-            <label>Warehouse</label>
-            <input class="fc" id="im-wh" list="dl-wh" placeholder="เลือกหรือพิมพ์ใหม่..." autocomplete="off">
-          </div>
-
+          <div class="fg"><label>Location</label><input class="fc" id="im-loc" placeholder="เช่น A-01-03"></div>
+          <div class="fg"><label>Warehouse</label><input class="fc" id="im-wh" placeholder="เช่น WH-01"></div>
           <div class="fg"><label>สต็อกเริ่มต้น</label><input class="fc" id="im-qty" type="number" placeholder="0" min="0"></div>
           <div class="fg"><label>Min Stock</label><input class="fc" id="im-min" type="number" placeholder="5" min="0"></div>
           <div class="fg"><label>ราคาต้นทุน (฿)</label><input class="fc" id="im-cost" type="number" placeholder="0"></div>
           <div class="fg"><label>ราคาขาย (฿)</label><input class="fc" id="im-price" type="number" placeholder="0"></div>
-
-          <!-- ⑤ คำอธิบาย — textarea ขยายได้ -->
-          <div class="fg full">
-            <label>คำอธิบาย</label>
-            <textarea class="fc" id="im-desc" placeholder="รายละเอียดสินค้า เช่น spec, รุ่น, ใช้กับเครื่องใด..."
-              style="resize:vertical;min-height:60px;max-height:200px;font-family:'Sarabun',sans-serif;line-height:1.5"></textarea>
-          </div>
+          <div class="fg full"><label>คำอธิบาย</label><input class="fc" id="im-desc" placeholder="รายละเอียดสินค้า"></div>
         </div>
-
-        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
           <button class="btn-sec" onclick="closeItemModal()">ยกเลิก</button>
-          <button class="btn-pri" id="btn-save-item" onclick="saveItem()"><i class="ti ti-device-floppy" style="font-size:13px"></i>บันทึก</button>
+          <button class="btn-pri" onclick="saveItem()"><i class="ti ti-device-floppy" style="font-size:13px"></i>บันทึก</button>
         </div>
       </div>
     </div>
@@ -760,135 +795,24 @@ function renderItemsTable(data) {
 function openItemModal(it) {
   var m = document.getElementById('item-modal');
   document.getElementById('item-modal-title').textContent = it ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่';
-
-  // populate fields — desc is now textarea
-  document.getElementById('im-sku').value   = it ? (it.sku||'')        : '';
-  document.getElementById('im-name').value  = it ? (it.name||'')       : '';
-  document.getElementById('im-cat').value   = it ? (it.category||'')   : '';
-  document.getElementById('im-unit').value  = it ? (it.unit||'')       : '';
-  document.getElementById('im-loc').value   = it ? (it.location||'')   : '';
-  document.getElementById('im-wh').value    = it ? (it.warehouse||'')  : '';
-  document.getElementById('im-qty').value   = it ? (it.qty_on_hand||0) : '';
-  document.getElementById('im-min').value   = it ? (it.qty_min||0)     : '';
-  document.getElementById('im-cost').value  = it ? (it.cost_price||0)  : '';
-  document.getElementById('im-price').value = it ? (it.unit_price||0)  : '';
-  document.getElementById('im-desc').value  = it ? (it.description||''):  '';
-
+  ['sku','name','cat','unit','loc','wh','qty','min','cost','price','desc'].forEach(function(f){ document.getElementById('im-'+f).value = it ? (it[f]||'') : ''; });
   m._edit = it ? it.id : null;
-
-  // ② populate datalists from existing items data
-  populateModalDropdowns();
-
-  m.style.display = 'block';
-  // scroll panel back to top each time
-  document.getElementById('item-modal-panel').scrollTop = 0;
+  m.style.display = 'flex';
 }
-
-function populateModalDropdowns() {
-  // Categories
-  var cats = [...new Set(allItems.map(function(i){ return i.category||''; }).filter(Boolean))].sort();
-  document.getElementById('dl-cat').innerHTML = cats.map(function(c){ return '<option value="'+c+'">'; }).join('');
-  // Locations
-  var locs = [...new Set(allItems.map(function(i){ return i.location||''; }).filter(Boolean))].sort();
-  document.getElementById('dl-loc').innerHTML = locs.map(function(l){ return '<option value="'+l+'">'; }).join('');
-  // Warehouses
-  var whs = [...new Set(allItems.map(function(i){ return i.warehouse||''; }).filter(Boolean))].sort();
-  document.getElementById('dl-wh').innerHTML = whs.map(function(w){ return '<option value="'+w+'">'; }).join('');
-}
-
-function closeItemModal() {
-  document.getElementById('item-modal').style.display = 'none';
-  // reset drag offset
-  var panel = document.getElementById('item-modal-panel');
-  panel.style.marginTop = '';
-  panel.style.marginLeft = '';
-}
-
+function closeItemModal() { document.getElementById('item-modal').style.display = 'none'; }
 function saveItem() {
-  var sku  = document.getElementById('im-sku').value.trim();
+  var sku = document.getElementById('im-sku').value.trim();
   var name = document.getElementById('im-name').value.trim();
-  if (!sku || !name) { alert('กรุณากรอก SKU และชื่อสินค้า'); return; }
-  var btn = document.getElementById('btn-save-item');
-  btn.disabled = true; btn.innerHTML = '<div class="spin"></div>';
-
-  // ① Fix: ส่ง category เป็น text ตรงๆ (ไม่ใช่ category_id)
-  //    items table มี column 'category' เป็น text ผ่าน categories.name
-  //    แต่ v_items join มาจาก categories.name → ต้อง upsert ผ่าน category text
-  var catText = document.getElementById('im-cat').value.trim();
-  var payload = {
-    sku:         sku,
-    name:        name,
-    unit:        document.getElementById('im-unit').value.trim() || 'ชิ้น',
-    location:    document.getElementById('im-loc').value.trim()  || null,
-    warehouse:   document.getElementById('im-wh').value.trim()   || null,
-    qty_on_hand: parseInt(document.getElementById('im-qty').value)  || 0,
-    qty_min:     parseInt(document.getElementById('im-min').value)  || 0,
-    cost_price:  parseFloat(document.getElementById('im-cost').value) || 0,
-    unit_price:  parseFloat(document.getElementById('im-price').value)|| 0,
-    description: document.getElementById('im-desc').value.trim() || null,
-    is_active:   true
-  };
-
-  // หา category_id จากชื่อหมวด (ถ้ามีใน categories table)
+  if (!sku||!name) { alert('กรุณากรอก SKU และชื่อสินค้า'); return; }
+  var payload = { sku:sku, name:name, category:document.getElementById('im-cat').value, unit:document.getElementById('im-unit').value,
+    location:document.getElementById('im-loc').value, warehouse:document.getElementById('im-wh').value,
+    qty_on_hand:parseInt(document.getElementById('im-qty').value)||0, qty_min:parseInt(document.getElementById('im-min').value)||5,
+    cost_price:parseFloat(document.getElementById('im-cost').value)||0, unit_price:parseFloat(document.getElementById('im-price').value)||0,
+    description:document.getElementById('im-desc').value, is_active:true };
   var id = document.getElementById('item-modal')._edit;
-  var catPromise = catText
-    ? api('categories?name=eq.' + encodeURIComponent(catText) + '&select=id').then(function(rows){
-        if (rows.length) {
-          payload.category_id = rows[0].id;
-        }
-        // ถ้าไม่พบ category → สร้างใหม่
-        return rows.length ? Promise.resolve() :
-          api('categories', { method:'POST', body: JSON.stringify({name: catText}) })
-            .then(function(r){ payload.category_id = r[0].id; });
-      })
-    : Promise.resolve();
-
-  catPromise.then(function(){
-    var p = id
-      ? api('items?id=eq.'+id, { method:'PATCH', body: JSON.stringify(payload) })
-      : api('items',           { method:'POST',  body: JSON.stringify(payload) });
-    return p;
-  }).then(function(){
-    closeItemModal();
-    loadItems();
-    populateModalDropdowns();
-  }).catch(function(e){
-    alert('เกิดข้อผิดพลาด: ' + e.message);
-  }).finally(function(){
-    btn.disabled = false;
-    btn.innerHTML = '<i class="ti ti-device-floppy" style="font-size:13px"></i>บันทึก';
-  });
+  var p = id ? api('items?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)}) : api('items',{method:'POST',body:JSON.stringify(payload)});
+  p.then(function(){ closeItemModal(); loadItems(); }).catch(function(e){ alert('เกิดข้อผิดพลาด: '+e.message); });
 }
-
-// ④ Draggable modal panel
-(function(){
-  var drag = false, sx, sy, mx, my;
-  document.addEventListener('DOMContentLoaded', function(){
-    var handle = document.getElementById('item-modal-drag');
-    var panel  = document.getElementById('item-modal-panel');
-    if (!handle || !panel) return;
-    handle.addEventListener('mousedown', function(e){
-      drag = true;
-      sx = e.clientX; sy = e.clientY;
-      mx = panel.offsetLeft || 0;
-      my = panel.offsetTop  || 0;
-      e.preventDefault();
-    });
-    document.addEventListener('mousemove', function(e){
-      if (!drag) return;
-      var dx = e.clientX - sx, dy = e.clientY - sy;
-      panel.style.position = 'relative';
-      panel.style.left = (mx + dx) + 'px';
-      panel.style.top  = (my + dy) + 'px';
-    });
-    document.addEventListener('mouseup', function(){ drag = false; });
-
-    // ④ click dark overlay (not panel) → close modal
-    document.getElementById('item-modal').addEventListener('click', function(e){
-      if (e.target === this) closeItemModal();
-    });
-  });
-}());
 
 // ── Import Excel/CSV ──────────────────────────────
 function importItems(input) {
@@ -1510,5 +1434,108 @@ function reloadCurrentPage() {
   loadItems().then(function() { loadDashboard(); btn.querySelector('i').style.animation=''; });
 }
 </script>
+
+<!-- ═══════════ THEME SWITCHER PANEL ═══════════ -->
+<div id="theme-panel">
+  <button id="theme-toggle-btn" onclick="toggleThemePanel()" title="เปลี่ยน Theme">
+    <i class="ti ti-palette"></i>
+  </button>
+  <div class="theme-sep"></div>
+
+  <!-- Orange (default) -->
+  <div>
+    <div class="theme-swatch active" id="sw-default" data-theme=""
+      style="background:linear-gradient(135deg,#f97316 50%,#f1f3f8 50%)"
+      onclick="setTheme('','sw-default')" title="Orange (Default)"></div>
+    <div class="theme-label">Default</div>
+  </div>
+
+  <!-- Dark -->
+  <div>
+    <div class="theme-swatch" id="sw-dark" data-theme="dark"
+      style="background:linear-gradient(135deg,#f97316 50%,#0f1117 50%)"
+      onclick="setTheme('dark','sw-dark')" title="Dark Mode"></div>
+    <div class="theme-label">Dark</div>
+  </div>
+
+  <!-- Ocean Blue -->
+  <div>
+    <div class="theme-swatch" id="sw-ocean" data-theme="ocean"
+      style="background:linear-gradient(135deg,#0ea5e9 50%,#f0f7ff 50%)"
+      onclick="setTheme('ocean','sw-ocean')" title="Ocean Blue"></div>
+    <div class="theme-label">Ocean</div>
+  </div>
+
+  <!-- Forest Green -->
+  <div>
+    <div class="theme-swatch" id="sw-forest" data-theme="forest"
+      style="background:linear-gradient(135deg,#16a34a 50%,#f2faf4 50%)"
+      onclick="setTheme('forest','sw-forest')" title="Forest Green"></div>
+    <div class="theme-label">Forest</div>
+  </div>
+
+  <!-- Violet -->
+  <div>
+    <div class="theme-swatch" id="sw-violet" data-theme="violet"
+      style="background:linear-gradient(135deg,#7c3aed 50%,#f3f2ff 50%)"
+      onclick="setTheme('violet','sw-violet')" title="Violet"></div>
+    <div class="theme-label">Violet</div>
+  </div>
+
+  <!-- Dark Ocean -->
+  <div>
+    <div class="theme-swatch" id="sw-dark-ocean" data-theme="dark-ocean"
+      style="background:linear-gradient(135deg,#38bdf8 50%,#0a1628 50%)"
+      onclick="setTheme('dark-ocean','sw-dark-ocean')" title="Dark Ocean"></div>
+    <div class="theme-label">D.Ocean</div>
+  </div>
+</div>
+
+<script>
+// ═══════════ THEME ENGINE ═══════════
+var _themePanelOpen = true;
+
+function setTheme(theme, swId) {
+  // apply to <html>
+  if (theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  // update active swatch
+  document.querySelectorAll('.theme-swatch').forEach(function(s){ s.classList.remove('active'); });
+  if (swId) document.getElementById(swId).classList.add('active');
+  // persist
+  try { localStorage.setItem('inv-theme', theme || ''); } catch(e){}
+  // redraw chart if on dashboard
+  if (typeof loadDashboard === 'function' && document.getElementById('pg-dash').style.display !== 'none') {
+    loadDashboard();
+  }
+}
+
+function toggleThemePanel() {
+  _themePanelOpen = !_themePanelOpen;
+  var p = document.getElementById('theme-panel');
+  if (_themePanelOpen) {
+    p.classList.remove('collapsed');
+    document.getElementById('theme-toggle-btn').innerHTML = '<i class="ti ti-palette"></i>';
+  } else {
+    p.classList.add('collapsed');
+    document.getElementById('theme-toggle-btn').innerHTML = '<i class="ti ti-palette"></i>';
+  }
+}
+
+// Restore saved theme on load
+(function(){
+  try {
+    var saved = localStorage.getItem('inv-theme') || '';
+    var swMap = { '':'sw-default', 'dark':'sw-dark', 'ocean':'sw-ocean',
+                  'forest':'sw-forest', 'violet':'sw-violet', 'dark-ocean':'sw-dark-ocean' };
+    if (saved) setTheme(saved, swMap[saved]);
+    else setTheme('', 'sw-default');
+  } catch(e){}
+})();
+</script>
+
 </body>
 </html>
